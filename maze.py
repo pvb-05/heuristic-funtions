@@ -81,7 +81,7 @@ class Maze():
         """
         Trả về khoảng cách Diagonal từ nút hiện tại đến đích
         """
-        return math.max(abs(node.state[0] - self.goal[0]), abs(node.state[1] - self.goal[1]))
+        return max(abs(node.state[0] - self.goal[0]), abs(node.state[1] - self.goal[1]))
     
     def actions(self, node):
         """
@@ -163,6 +163,8 @@ class Maze():
                         print("B", end="")
                     else:
                         print(char, end="")
+        else:
+            print("No Solution!")
 
     def output_image(self, filename, show_solution=True, show_explored=False):
         """
