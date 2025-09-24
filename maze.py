@@ -1,4 +1,5 @@
 import sys
+import time
 import heapq
 import math
 from PIL import Image, ImageDraw
@@ -77,9 +78,9 @@ class Maze():
         """
         return math.sqrt(pow(node.state[0] - self.goal[0], 2) + pow(node.state[1] - self.goal[1], 2))
     
-    def diagonal_distance(self, node):
+    def chebyshev_distance(self, node):
         """
-        Trả về khoảng cách Diagonal từ nút hiện tại đến đích
+        Trả về khoảng cách Chebyshev từ nút hiện tại đến đích
         """
         return max(abs(node.state[0] - self.goal[0]), abs(node.state[1] - self.goal[1]))
     
@@ -208,11 +209,19 @@ def main():
     Khởi tạo AI giải mã mê cung và hiển thị kết quả
     '''
     if len(sys.argv) != 2:
-        sys.exit()
+        sys.exit("Too many arguments or too few arguments!")
     else:
         maze = Maze(sys.argv[1])
+        start = time.time()
         maze.Astar()
+        end = time.time()
+        print("=========Solved Maze=========")
         maze.result()
         maze.output_image("mazeA.png")
+        print()
+        print("=========Statistical=========")
+        print(f"Number of explored states: {len(maze.explored)}")
+        print(f"Past cost: {len(maze.solution[1])}")
+        print(f"Run time: {end - start:.3f} secs")
 if __name__ == "__main__":
     main()
