@@ -146,7 +146,7 @@ class Maze():
                         child.h = self.manhattan_distance(child)
                         child.g = node.g + 1
                         child.f = child.h + child.g
-                        if not any(node.state == child.state for node in self.frontier):
+                        if child.state not in self.explored and not any(node.state == child.state for node in self.frontier):
                             heapq.heappush(self.frontier, child)
 
     def result(self):
