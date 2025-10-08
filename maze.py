@@ -5,16 +5,6 @@ import math
 from PIL import Image, ImageDraw
 
 class Node:
-    """
-    Lớp đại diện cho mỗi nút (một trạng thái) trong không gian tìm kiếm của mê cung
-    Mỗi nút bao gồm:
-        state : vị trí của nút hiện tại trong mê cung
-        parent: nút cha dẫn đến nút hiện tại 
-        action: hành động dẫn đến trạng thái hiện tại 
-        f     : tổng khoảng cách của h và g
-        h     : khoảng cách từ nút hiện tại đến đích
-        g     : khoảng cách từ nút ban đầu đến hiện tại
-    """
     def __init__(self, state, parent, action):
         self.parent = parent
         self.action = action
@@ -23,22 +13,12 @@ class Node:
         self.h = 0
         self.f = self.g + self.h
     
-    # Phương thức so sánh nhỏ hơn giũa 2 nút 
     def __lt__(self, other):
         return self.f < other.f
  
 class Maze():
-    """
-    Lớp chính xử lí mê cung:
-        1. Đọc mê cung
-        2. Tìm đường đi 
-        3. Hiển thị kết quả
-    """
-    def __init__(self, maze_map):
-        """
-        Đọc file mê cung và thiết lập thông tin ban đầu
-        """
-        # Đọc mê cung
+
+    def __init__(self, maze_map, distance_method):
         with open(maze_map, "r") as file:
             maze = []
             self.maze = []
@@ -49,7 +29,6 @@ class Maze():
         self.width = max(len(line) for line in maze) 
         self.height = len(maze)
             
-        # Lưu vị trí ban đầu, vị trí đích, và các bước tường
         self.walls = []
         for i, row in enumerate(maze):
             for j, char in enumerate(row):
@@ -63,36 +42,20 @@ class Maze():
         if self.start is None or self.goal is None:
             sys.exit("Không tìm thẩy điểm bắt đầu hoặc điểm kết thúc !")
 
-        # Lưu đường đi tối ưu
+        self.distance_method = getattr(self, distance_method)
         self.solution = None
 
     def manhattan_distance(self, node):
-        """
-        Trả về khoảng cách Manhattan từ nút hiện tại đến đích
-        """
         return abs(node.state[0] - self.goal[0]) + abs(node.state[1] - self.goal[1])
     
     def euclide_distance(self, node):
-        """
-        Trả về khoảng cách Euclide từ nút hiện tại đến đích
-        """
         return math.sqrt(pow(node.state[0] - self.goal[0], 2) + pow(node.state[1] - self.goal[1], 2))
     
     def chebyshev_distance(self, node):
-        """
-        Trả về khoảng cách Chebyshev từ nút hiện tại đến đích
-        """
         return max(abs(node.state[0] - self.goal[0]), abs(node.state[1] - self.goal[1]))
     
     def actions(self, node):
-        """
-        Trả về một danh sách các hành động và trạng thái hợp lệ có thể thực hiện từ node hiện tại.
-
-        Mỗi phần tử trong danh sách trả về là một tuple (action, state) 
-        Một hành động được coi là hợp lệ nếu trạng thái kết quả:
-            1. Nằm trong phạm vi của mê cung.
-            2. Không phải là một bức tường.
-        """
+ 
         row, col = node.state
         acts = [
             ("up", (row - 1, col)),
@@ -109,12 +72,9 @@ class Maze():
         return new_states
     
     def Astar(self):
-        """
-        Thực hiện thuật toán A* tìm đường đi tối ưu
-        """
-        # Khởi tạo trạng thái ban đầu
+
         start = Node(self.start, parent = None, action = None)
-        start.h = self.manhattan_distance(start)
+        start.h = self.distance_method(start)
         start.g = 0
         start.f = start.h
 
@@ -122,7 +82,7 @@ class Maze():
         heapq.heapify(self.frontier)
         self.explored = set()
 
-        # Vòng lặp tìm kiếm đường đi
+
         while True:
             if len(self.frontier) == 0:
                 sys.exit("No solution!")
@@ -143,16 +103,13 @@ class Maze():
                     self.explored.add(node.state)
                     for action, state in self.actions(node):
                         child = Node(state = state, parent = node, action = action)
-                        child.h = self.manhattan_distance(child)
+                        child.h = self.distance_method(child)
                         child.g = node.g + 1
                         child.f = child.h + child.g
                         if child.state not in self.explored and not any(node.state == child.state for node in self.frontier):
                             heapq.heappush(self.frontier, child)
 
     def result(self):
-        """
-        In ra đường đi nếu có
-        """
         if self.solution:
             for i, row in enumerate(self.maze):
                 for j, char in enumerate(row):
@@ -167,10 +124,8 @@ class Maze():
         else:
             print("No Solution!")
 
-    def output_image(self, filename, show_solution=True, show_explored=False):
-        """
-        Xuất ảnh hiện thị trực quan đường đi 
-        """
+    def output_image(self, filename, show_solution=True, show_explored=True):
+
         cell_size = 50
         cell_border = 2
 
@@ -208,16 +163,16 @@ def main():
     '''
     Khởi tạo AI giải mã mê cung và hiển thị kết quả
     '''
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         sys.exit("Too many arguments or too few arguments!")
     else:
-        maze = Maze(sys.argv[1])
+        maze = Maze(sys.argv[1], sys.argv[2])
         start = time.time()
         maze.Astar()
         end = time.time()
         print("=========Solved Maze=========")
         maze.result()
-        maze.output_image("mazeA.png")
+        maze.output_image("solution.png")
         print()
         print("=========Statistical=========")
         print(f"Number of explored states: {len(maze.explored)}")
