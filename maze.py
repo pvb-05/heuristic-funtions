@@ -42,19 +42,21 @@ class Maze():
         if self.start is None or self.goal is None:
             sys.exit("Không tìm thẩy điểm bắt đầu hoặc điểm kết thúc !")
 
+        if distance_method == "euclide" or distance_method == "chebyshev":
+            self.allow_diagonal = True
         self.distance_method = getattr(self, distance_method)
         self.solution = None
 
-    def manhattan_distance(self, node):
+    def manhattan(self, node):
         return abs(node.state[0] - self.goal[0]) + abs(node.state[1] - self.goal[1])
     
-    def euclide_distance(self, node):
+    def euclide(self, node):
         return math.sqrt(pow(node.state[0] - self.goal[0], 2) + pow(node.state[1] - self.goal[1], 2))
     
-    def chebyshev_distance(self, node):
+    def chebyshev(self, node):
         return max(abs(node.state[0] - self.goal[0]), abs(node.state[1] - self.goal[1]))
     
-    def actions(self, node):
+    def actions(self, node, diagonal = False):
  
         row, col = node.state
         acts = [
@@ -63,7 +65,15 @@ class Maze():
             ("left", (row, col - 1)),
             ("right", (row, col + 1))
         ]
-
+        if diagonal:
+            acts.extend(
+                [
+                    ("up-left", (row - 1, col - 1)),
+                    ("down-left", (row + 1, col - 1)),
+                    ("up-right", (row - 1, col + 1)),
+                    ("down-right", (row + 1, col + 1))
+                ]
+            )
         new_states = []
         for action, state in acts:
             if 0 <= state[0] < self.height and 0 <= state[1] < self.width:
@@ -101,7 +111,7 @@ class Maze():
                         return
                 else:
                     self.explored.add(node.state)
-                    for action, state in self.actions(node):
+                    for action, state in self.actions(node, self.allow_diagonal):
                         child = Node(state = state, parent = node, action = action)
                         child.h = self.distance_method(child)
                         child.g = node.g + 1
@@ -124,7 +134,7 @@ class Maze():
         else:
             print("No Solution!")
 
-    def output_image(self, filename, show_solution=True, show_explored=True):
+    def output_image(self, filename, show_solution=True, show_explored=False):
 
         cell_size = 50
         cell_border = 2
