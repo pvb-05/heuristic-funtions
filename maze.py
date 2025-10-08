@@ -42,6 +42,7 @@ class Maze():
         if self.start is None or self.goal is None:
             sys.exit("Không tìm thẩy điểm bắt đầu hoặc điểm kết thúc !")
 
+        self.allow_diagonal = False
         if distance_method == "euclide" or distance_method == "chebyshev":
             self.allow_diagonal = True
         self.distance_method = getattr(self, distance_method)
