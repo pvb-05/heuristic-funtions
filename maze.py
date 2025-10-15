@@ -20,17 +20,13 @@ class Maze():
 
     def __init__(self, maze_map, distance_method):
         with open(maze_map, "r") as file:
-            maze = []
-            self.maze = []
             rows = file.readlines()
-            for row in rows:
-                maze.append(list(row.strip('\n')))
-                self.maze.append(list(row))
-        self.width = max(len(line) for line in maze) 
-        self.height = len(maze)
+            self.maze = [list(row.strip('\n')) for row in rows]
+        self.width = max(len(line) for line in self.maze) 
+        self.height = len(self.maze)
             
         self.walls = []
-        for i, row in enumerate(maze):
+        for i, row in enumerate(self.maze):
             for j, char in enumerate(row):
                 if char == 'A':
                     self.start = (i,j)
@@ -41,17 +37,27 @@ class Maze():
 
         if self.start is None or self.goal is None:
             sys.exit("Không tìm thẩy điểm bắt đầu hoặc điểm kết thúc !")
-
-        self.allow_diagonal = False
-        if distance_method == "euclide" or distance_method == "chebyshev":
-            self.allow_diagonal = True
-        self.distance_method = getattr(self, distance_method)
+        
         self.solution = None
 
+        self.allow_diagonal = False
+        methods = {
+            "manhattan" : self.manhattan,
+            "euclidean" : self.euclidean,
+            "chebyshev" : self.chebyshev
+        }
+
+        if distance_method not in methods:
+            sys.exit("Sai tên hàm khoảng cách!")
+        if distance_method == "euclidean" or distance_method == "chebyshev":
+            self.allow_diagonal = True
+        self.distance_method = methods[distance_method]
+
+    
     def manhattan(self, node):
         return abs(node.state[0] - self.goal[0]) + abs(node.state[1] - self.goal[1])
     
-    def euclide(self, node):
+    def euclidean(self, node):
         return math.sqrt(pow(node.state[0] - self.goal[0], 2) + pow(node.state[1] - self.goal[1], 2))
     
     def chebyshev(self, node):
@@ -115,7 +121,10 @@ class Maze():
                     for action, state in self.actions(node, self.allow_diagonal):
                         child = Node(state = state, parent = node, action = action)
                         child.h = self.distance_method(child)
-                        child.g = node.g + 1
+                        if action in ["up", "down", "left", "right"]:
+                            child.g = node.g + 1
+                        else:
+                            child.g = node.g + math.sqrt(2)
                         child.f = child.h + child.g
                         if child.state not in self.explored and not any(node.state == child.state for node in self.frontier):
                             heapq.heappush(self.frontier, child)
@@ -131,7 +140,8 @@ class Maze():
                     elif (i,j) == self.goal:
                         print("B", end="")
                     else:
-                        print(char, end="")
+                        print(char, end="") 
+                print()
         else:
             print("No Solution!")
 
@@ -184,7 +194,6 @@ def main():
         print("=========Solved Maze=========")
         maze.result()
         maze.output_image("solution.png")
-        print()
         print("=========Statistical=========")
         print(f"Number of explored states: {len(maze.explored)}")
         print(f"Past cost: {len(maze.solution[1])}")
