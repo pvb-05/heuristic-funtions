@@ -40,7 +40,6 @@ class Maze():
         
         self.solution = None
 
-        self.allow_diagonal = False
         methods = {
             "manhattan" : self.manhattan,
             "euclidean" : self.euclidean,
@@ -49,8 +48,12 @@ class Maze():
 
         if distance_method not in methods:
             sys.exit("Sai tên hàm khoảng cách!")
+
+        self.allow_diagonal = False
         if distance_method == "euclidean" or distance_method == "chebyshev":
-            self.allow_diagonal = True
+            answer = input("Bạn có muốn bật tính năng đi chéo không? ")
+            if answer in ["yes", "y", "có", "co"]:
+                self.allow_diagonal = True
         self.distance_method = methods[distance_method]
 
     
@@ -108,13 +111,14 @@ class Maze():
                 if node.state == self.goal:
                         actions = []
                         path = []
+                        cost = node.g
                         while node.parent is not None:
                             actions.append(node.action)
                             path.append(node.state)
                             node = node.parent
                         actions.reverse()
                         path.reverse()
-                        self.solution = (actions, path)
+                        self.solution = (actions, path, cost)
                         return
                 else:
                     self.explored.add(node.state)
@@ -196,7 +200,7 @@ def main():
         maze.output_image("solution.png")
         print("=========Statistical=========")
         print(f"Number of explored states: {len(maze.explored)}")
-        print(f"Past cost: {len(maze.solution[1])}")
+        print(f"Past cost: {maze.solution[2]:.3f}")
         print(f"Run time: {end - start:.3f} secs")
 if __name__ == "__main__":
     main()
